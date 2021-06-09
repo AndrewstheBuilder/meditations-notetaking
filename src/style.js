@@ -3,7 +3,7 @@ import React from 'react';
 import {Editor, EditorState} from 'draft-js';
 import 'draft-js/dist/Draft.css';
 
-export const StyledInput = styled.textarea`
+/*export const StyledInput = styled.textarea`
     color:purple;
 `
 export const StyledInputDiv = styled(
@@ -49,6 +49,10 @@ export const MyEditor = () => {
         />
       </div>
     );
-  }
+  }*/
 
-  
+  export const RichEditor = styled(
+    ({...rest}) => (
+      <Editor {...rest}/>
+    )
+  );
