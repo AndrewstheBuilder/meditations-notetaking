@@ -3,9 +3,25 @@ import React from 'react';
 import {useState, useRef, useEffect} from 'react';
 import 'draft-js/dist/Draft.css';
 import './richtexteditor.css';
-import {Button} from '@material-ui/core';
+import {Button, AppBar, Toolbar, MenuItem, Menu} from '@material-ui/core';
+import IconButton from '@material-ui/core/IconButton';
+import MenuIcon from '@material-ui/icons/Menu';
+import { makeStyles } from '@material-ui/core/styles';
 
-function RichEditor( ){
+const useStyles = makeStyles((theme) => ({
+  root: {
+    flexGrow: 1,
+  },
+  menuButton: {
+    marginRight: theme.spacing(2),
+  },
+  title: {
+    flexGrow: 1,
+  },
+}));
+
+function RichEditor(){
+
   const [editorState, setEditorState] = useState(
     () => EditorState.createEmpty()
   );
@@ -24,15 +40,6 @@ function RichEditor( ){
   /*On componentDidMount*/
   useEffect( () => {
 
-    // TODO: Maintain data persistence
-    const content = window.localStorage.getItem(currentNote);
-
-    if (content) {
-      setEditorState(EditorState.createWithContent(convertFromRaw(JSON.parse(content))));
-    } else {
-      setEditorState(EditorState.createEmpty());
-    }
-
   }, [])
 
 
@@ -50,6 +57,7 @@ function RichEditor( ){
   }
 
   function newNote(){
+    console.log("newnote");
     setCurrentNote(currentNote+1);
     setAmountOfNotes(amountOfNotes+1);
     const newEditorState = EditorState.push(editorState, ContentState.createFromText(''));
@@ -91,6 +99,7 @@ function RichEditor( ){
   /*Save to local storage*/
   function saveContent(content)  {
     //let noteTitle = convertToRaw(content).blocks[0].text;
+    console.log("SAVED!");
     window.localStorage.setItem(currentNote, JSON.stringify(convertToRaw(content)));
   }
 
@@ -106,37 +115,38 @@ function RichEditor( ){
     }
   }
 
+  const classes = useStyles();
   return (
-      <div className="RichEditor-root">
-          <BlockStyleControls
-          editorState={editorState}
-          onToggle={toggleBlockType}
-          />
-          <Button
-          variant="contained"
-          color="primary"
-          onClick={newNote}>
-              New
+    <>
+      <AppBar position="static" color="primary">
+        <Toolbar>
+        <AllStoredNotesMenu amountOfNotes={amountOfNotes}/>
+          <Button variant="contained"
+          onClick={() => saveContent(editorState.getCurrentContent())}>
+            Save
           </Button>
-          <br></br>
-          <InlineStyleControls
-          editorState={editorState}
-          onToggle={toggleInlineStyle}
-          />
+          <div style={{marginLeft: '5px'}}></div>
+          <Button variant="contained" onClick={() => newNote()}>
+            New
+          </Button>
+        </Toolbar>
+      </AppBar>
+      <div className="RichEditor-root">
           <div className={className} onClick={focusOnEditor}>
-          <Editor
-              blockStyleFn={getBlockStyle}
-              customStyleMap={styleMap}
-              editorState={editorState}
-              handleKeyCommand={handleKeyCommand}
-              onChange={onChange}
-              onTab={onTab}
-              placeholder="Write a note..."
-              ref={editor}
-              spellCheck={true}
-          />
+            <Editor
+                blockStyleFn={getBlockStyle}
+                customStyleMap={styleMap}
+                editorState={editorState}
+                handleKeyCommand={handleKeyCommand}
+                onChange={onChange}
+                onTab={onTab}
+                placeholder="Title goes on first line"
+                ref={editor}
+                spellCheck={false}
+            />
           </div>
-    </div>
+      </div>
+      </>
   );
 
 }
@@ -150,6 +160,55 @@ const styleMap = {
       padding: 2,
     },
   };
+
+  function AllStoredNotesMenu(props){
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
+
+    const handleMenu = (event) => {
+      setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
+
+    let keys = []
+    for(let i = 0; i < props.amountOfNotes; i++){
+      keys.push(i);
+    }
+    const classes = useStyles();
+    return (
+      <>
+        <IconButton
+        aria-label="menu"
+        aria-controls="menu-appbar"
+        aria-haspopup="true"
+        onClick={handleMenu}
+        color="inherit"
+        >
+          <MenuIcon />
+        </IconButton>
+        <Menu
+          id="menu-appbar"
+          anchorEl={anchorEl}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          keepMounted
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          open={open}
+          onClose={handleClose}
+        >
+            <MenuItem onClick={handleClose}>HEY</MenuItem>
+        </Menu>
+      </>
+    );
+  }
 
   function getBlockStyle(block) {
     switch (block.getType()) {
@@ -198,17 +257,27 @@ const styleMap = {
       .getBlockForKey(selection.getStartKey())
       .getType();
 
+    const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const handleClick = (event) => {
+      setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
+
     return (
       <div className="RichEditor-controls">
-        {BLOCK_TYPES.map((type) =>
-          <StyleButton
-            key={type.label}
-            active={type.style === blockType}
-            label={type.label}
-            onToggle={props.onToggle}
-            style={type.style}
-          />
-        )}
+          {BLOCK_TYPES.map((type) =>
+              <StyleButton
+                key={type.label}
+                active={type.style === blockType}
+                label={type.label}
+                onToggle={props.onToggle}
+                style={type.style}
+              />
+          )}
       </div>
     );
   };
@@ -217,7 +286,7 @@ const styleMap = {
     {label: 'Bold', style: 'BOLD'},
     {label: 'Italic', style: 'ITALIC'},
     {label: 'Underline', style: 'UNDERLINE'},
-    {label: 'Monospace', style: 'CODE'}
+    {label: 'Monospace', style: 'CODE'},
   ];
 
   const InlineStyleControls = (props) => {
