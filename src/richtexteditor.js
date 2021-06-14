@@ -7,18 +7,23 @@ import {Button, AppBar, Toolbar, MenuItem, Menu} from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import { makeStyles } from '@material-ui/core/styles';
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    flexGrow: 1,
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-  },
-  title: {
-    flexGrow: 1,
-  },
-}));
+import 'bootstrap/dist/css/bootstrap.min.css';
+import {
+  Dropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem } from 'reactstrap';
+  import {
+    Collapse,
+    Navbar,
+    NavbarToggler,
+    NavbarBrand,
+    Nav,
+    NavItem,
+    NavLink,
+    UncontrolledDropdown,
+    NavbarText
+  } from 'reactstrap';
 
 function RichEditor(){
 
@@ -31,15 +36,15 @@ function RichEditor(){
 
   /*On componentDidUpdate*/
   useEffect( () => {
-    const contentState = editorState.getCurrentContent();
-    saveContent(contentState);
-    focusOnEditor();
+    const currentState = editorState.getCurrentContent();
+    saveContent(currentState);
+    //focusOnEditor();
     }
   )
 
   /*On componentDidMount*/
   useEffect( () => {
-
+    //focusOnEditor();
   }, [])
 
 
@@ -92,6 +97,38 @@ function RichEditor(){
     )
   }
 
+  function AllStoredNotesMenu(props){
+    let keys = []
+    for(let i = 0; i < props.amountOfNotes; i++){
+      keys.push(i);
+    }
+
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const toggle = () => setDropdownOpen(prevState => !prevState);
+    //keys.map( x=>console.log(JSON.parse(localStorage.getItem(x)).blocks[0].text))
+    return (
+      <>
+        <Dropdown isOpen={dropdownOpen} toggle={toggle}>
+          <DropdownToggle caret >
+            Notes
+          </DropdownToggle>
+          <DropdownMenu>
+            <DropdownItem header>Current Note</DropdownItem>
+            <DropdownItem>{JSON.parse(localStorage.getItem(props.amountOfNotes)).blocks[0].text}</DropdownItem>
+            <DropdownItem divider />
+            <DropdownItem header>All Notes</DropdownItem>
+            {keys.map( x => {
+              return (
+                <DropdownItem >{JSON.parse(localStorage.getItem(x)).blocks[0].text}</DropdownItem>
+                /*onClick={() => setEditorState(EditorState.createContentWith(creaftFromRaw(JSON.parse(localStorage.getItem(x)).blocks[0].text))))} */
+              );
+            })}
+          </DropdownMenu>
+        </Dropdown>
+      </>
+    );
+  }
+
   function focusOnEditor(){
       editor.current.focus();
   }
@@ -99,7 +136,7 @@ function RichEditor(){
   /*Save to local storage*/
   function saveContent(content)  {
     //let noteTitle = convertToRaw(content).blocks[0].text;
-    console.log("SAVED!");
+    console.log("SAVED");
     window.localStorage.setItem(currentNote, JSON.stringify(convertToRaw(content)));
   }
 
@@ -115,25 +152,30 @@ function RichEditor(){
     }
   }
 
-  const classes = useStyles();
   return (
     <>
-      <AppBar position="static" color="primary">
-        <Toolbar>
-        <AllStoredNotesMenu amountOfNotes={amountOfNotes}/>
+      <Navbar color="primary" primary expand="md">
+          <div style={{marginLeft: '20px'}}></div>
+          <AllStoredNotesMenu amountOfNotes={amountOfNotes}/>
+          <div style={{marginLeft: '20px'}}></div>
           <Button variant="contained"
-          onClick={() => saveContent(editorState.getCurrentContent())}>
+            onClick={() => {
+               saveContent(editorState.getCurrentContent());
+               //focusOnEditor();
+              }}>
             Save
           </Button>
           <div style={{marginLeft: '5px'}}></div>
-          <Button variant="contained" onClick={() => newNote()}>
+          <Button variant="contained" onClick={() => {
+            newNote();
+          }}>
             New
           </Button>
-        </Toolbar>
-      </AppBar>
+      </Navbar>
       <div className="RichEditor-root">
-          <div className={className} onClick={focusOnEditor}>
+          <div className={className} >
             <Editor
+                onblur={editorState.onBlur}
                 blockStyleFn={getBlockStyle}
                 customStyleMap={styleMap}
                 editorState={editorState}
@@ -146,7 +188,7 @@ function RichEditor(){
             />
           </div>
       </div>
-      </>
+    </>
   );
 
 }
@@ -160,55 +202,6 @@ const styleMap = {
       padding: 2,
     },
   };
-
-  function AllStoredNotesMenu(props){
-    const [anchorEl, setAnchorEl] = useState(null);
-    const open = Boolean(anchorEl);
-
-    const handleMenu = (event) => {
-      setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => {
-      setAnchorEl(null);
-    };
-
-    let keys = []
-    for(let i = 0; i < props.amountOfNotes; i++){
-      keys.push(i);
-    }
-    const classes = useStyles();
-    return (
-      <>
-        <IconButton
-        aria-label="menu"
-        aria-controls="menu-appbar"
-        aria-haspopup="true"
-        onClick={handleMenu}
-        color="inherit"
-        >
-          <MenuIcon />
-        </IconButton>
-        <Menu
-          id="menu-appbar"
-          anchorEl={anchorEl}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          keepMounted
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          open={open}
-          onClose={handleClose}
-        >
-            <MenuItem onClick={handleClose}>HEY</MenuItem>
-        </Menu>
-      </>
-    );
-  }
 
   function getBlockStyle(block) {
     switch (block.getType()) {

@@ -1,12 +1,12 @@
 import './App.css';
 import {useState} from 'react';
 import React from 'react';
-import RichEditor from './richtexteditor.js'
+import MediumEditor from './mediumeditor.js'
 
 function App() {
   return (
-    <div className="App">
-      <RichEditor/>
+    <div className="App"style={{padding:"7% 20% 7%"}} >
+      <MediumEditor />
     </div>
   );
 }
